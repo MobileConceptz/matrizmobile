@@ -207,7 +207,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
       b.textContent=claimArmed?"Tap again to confirm prize given":"Prize given to customer";
       b.onclick=function(){
         if(!claimArmed){claimArmed=true;toolRender();return}
-        card.win.claimed=true;claimArmed=false;save();render();toolRender();
+        card=newCard(todays());claimArmed=false;save();render();toolRender();setRes("Prize recorded. New card started.","good");
       };
       ex.appendChild(b);
     }else if(card.win&&card.win.claimed){
