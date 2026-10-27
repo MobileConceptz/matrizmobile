@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lucky Bingo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f1ff;--panel:#ffffff;--ink:#14183a;--sub:#5b6088;--line:#d9d6f2;
+  --dab:#ef4b4b;--dabink:#ffffff;--gold:#ffc933;--goldink:#14183a;--ok:#12a66a;
+  --font:"Fredoka",ui-rounded,"Segoe UI",system-ui,sans-serif;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#0f1230;--panel:#1b2050;--ink:#f1f0ff;--sub:#a5a9d6;--line:#343a78;--dab:#ff6464;--goldink:#14183a}
+}
+:root[data-theme="dark"]{--bg:#0f1230;--panel:#1b2050;--ink:#f1f0ff;--sub:#a5a9d6;--line:#343a78;--dab:#ff6464;--goldink:#14183a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);min-height:100vh}
+main{max-width:460px;margin:0 auto;padding:18px 14px 28px}
+h1{font-size:2rem;line-height:1.05;margin:0 0 4px;font-weight:700}
+.tag{color:var(--sub);margin:0 0 14px;font-size:.98rem}
+.stats{display:flex;gap:8px;margin-bottom:12px}
+.stat{flex:1;background:var(--panel);border:1.5px solid var(--line);border-radius:14px;padding:8px 10px}
+.stat b{display:block;font-size:1.35rem}
+.stat span{font-size:.8rem;color:var(--sub)}
+.board{background:var(--panel);border:1.5px solid var(--line);border-radius:20px;padding:10px}
+.heads,.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.heads div{height:38px;border-radius:12px;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-weight:700;font-size:1.25rem}
+.grid{margin-top:6px}
+.cell{aspect-ratio:1;border-radius:14px;border:1.5px solid var(--line);display:grid;place-items:center;font-size:1.45rem;font-weight:500;position:relative}
+.cell.m{background:var(--dab);border-color:var(--dab);color:var(--dabink);font-weight:700;transform:rotate(-4deg)}
+.cell.f{background:var(--gold);border-color:var(--gold);color:var(--goldink)}
+.cell.w{background:var(--gold);border-color:var(--gold);color:var(--goldink);animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.07)}}
+.hist{margin:14px 0 4px;font-size:.85rem;color:var(--sub)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{min-width:36px;padding:4px 9px;border-radius:99px;border:1.5px solid var(--line);text-align:center;font-size:.95rem}
+.chip.hit{background:var(--dab);border-color:var(--dab);color:var(--dabink)}
+.banner{margin-top:12px;background:var(--gold);color:var(--goldink);border-radius:16px;padding:12px 14px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.banner small{display:block;font-weight:500}
+button{font-family:inherit;font-size:1rem;font-weight:700;border:0;border-radius:12px;padding:12px 16px;cursor:pointer;background:var(--ink);color:var(--bg)}
+button.alt{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+button.go{background:var(--dab);color:#fff}
+button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.how{margin-top:16px;color:var(--sub);font-size:.9rem;line-height:1.45}
+.foot{margin-top:18px;display:flex;justify-content:space-between;align-items:center;color:var(--sub);font-size:.8rem}
+.foot button{padding:7px 12px;font-size:.8rem;font-weight:500}
+.ov{position:fixed;inset:0;background:rgba(10,12,35,.72);display:none;align-items:center;justify-content:center;padding:18px;z-index:20;overflow:hidden}
+.ov.on{display:flex}
+.sheet{background:var(--panel);color:var(--ink);border-radius:22px;padding:20px;width:100%;max-width:380px;position:relative;z-index:2;text-align:center}
+.sheet h2{margin:4px 0 6px;font-size:1.7rem}
+.sheet p{margin:6px 0;color:var(--sub)}
+.sheet input{width:100%;font:inherit;font-size:1.6rem;text-align:center;padding:10px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);margin:10px 0}
+.row{display:flex;gap:8px;margin-top:8px}.row button{flex:1}
+.prize{margin:12px 0;background:var(--gold);color:var(--goldink);border-radius:18px;padding:10px}
+.prize small{display:block;font-weight:500}
+.prize b{font-size:4rem;line-height:1}
+.res{min-height:2.6em;font-weight:700;margin:6px 0}
+.res.good{color:var(--ok)}.res.bad{color:var(--sub)}
+.cf{position:absolute;top:-20px;width:10px;height:16px;border-radius:2px;animation:fall linear forwards;z-index:1}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+@media (prefers-reduced-motion: reduce){.cell.w{animation:none}.cf{display:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Lucky Bingo</h1>
+  <p class="tag">Buy or top up in store. Get 1 roll for each purchase.</p>
+  <div class="stats">
+    <div class="stat"><b id="sRolls">0/2</b><span>Rolls used today</span></div>
+    <div class="stat"><b id="sHits">0/24</b><span>Numbers matched</span></div>
+  </div>
+  <div class="board">
+    <div class="heads"><div>B</div><div>I</div><div>N</div><div>G</div><div>O</div></div>
+    <div class="grid" id="grid"></div>
+  </div>
+  <div id="banner"></div>
+  <div class="hist"><span id="hTitle">Your rolls</span><div class="chips" id="chips"></div></div>
+  <p class="how">Get 5 matched numbers in a row, across, down or corner to corner, to win a prize. The centre star is free. Show your card to our staff after each purchase.</p>
+  <div class="foot"><span id="cardId"></span><button class="alt" id="staffBtn">Staff</button></div>
+</main>
+
+<div class="ov" id="winOv">
+  <div class="sheet">
+    <div style="font-size:3rem">🎉</div>
+    <h2>Congratulations!</h2>
+    <p>You have won a prize!</p>
+    <div class="prize"><small>Your prize number</small><b id="winNo">0</b></div>
+    <p>Show this screen to our staff to collect your prize.</p>
+    <p id="winMeta" style="font-size:.8rem"></p>
+    <button class="go" id="winOk" style="width:100%;margin-top:6px">OK</button>
+  </div>
+</div>
+
+<div class="ov" id="stOv">
+  <div class="sheet">
+    <div id="pinView">
+      <h2>Staff only</h2>
+      <p>Enter the shop PIN.</p>
+      <input id="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="6" aria-label="Shop PIN">
+      <div class="res bad" id="pinRes"></div>
+      <div class="row"><button class="alt" id="pinCancel">Cancel</button><button id="pinGo">Unlock</button></div>
+    </div>
+    <div id="toolView" style="display:none">
+      <h2>Mark rolled number</h2>
+      <p id="toolInfo"></p>
+      <input id="num" type="number" inputmode="numeric" min="1" aria-label="Rolled number">
+      <div class="res" id="res"></div>
+      <div class="row"><button class="go" id="markBtn">Mark number</button></div>
+      <div class="row" id="extraRow"></div>
+      <div class="row"><button class="alt" id="closeBtn">Done, back to customer</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var COL=15, MAX=COL*5, DAILY=2, KEY="ebingo.card.v1";
+  var $=function(s){return document.querySelector(s)};
+  var mem=null, card, pending=false, claimArmed=false, newArmed=false;
+  var LINES=[];
+  for(var i=0;i<5;i++){LINES.push([0,1,2,3,4].map(function(c){return i*5+c}));LINES.push([0,1,2,3,4].map(function(r){return r*5+i}))}
+  LINES.push([0,6,12,18,24]);LINES.push([4,8,12,16,20]);
+
+  function staffPin(){
+    var p=today().split("-"),y=+p[0],m=+p[1],d=+p[2];
+    var dd=(d<10?"0":"")+d,mm=(m<10?"0":"")+m;
+    var w=new Date(y,m-1,d).getDay();if(w===0)w=7;
+    return dd+w+mm+w;
+  }
+  function today(){return new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Singapore"})}
+  function rnd(a,b){var u=new Uint32Array(1);crypto.getRandomValues(u);return a+u[0]%(b-a+1)}
+  function newCard(keepRolls){
+    var nums=new Array(25);
+    for(var c=0;c<5;c++){
+      var pool=[];for(var k=c*COL+1;k<=(c+1)*COL;k++)pool.push(k);
+      for(var r=0;r<5;r++){nums[r*5+c]=pool.splice(rnd(0,pool.length-1),1)[0]}
+    }
+    nums[12]=0;
+    var id="";var ch="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    for(var j=0;j<6;j++)id+=ch.charAt(rnd(0,ch.length-1));
+    var m=new Array(25).fill(false);m[12]=true;
+    return {id:id,nums:nums,marked:m,rolls:keepRolls||[],win:null,made:today()};
+  }
+  function load(){try{var s=localStorage.getItem(KEY);if(s)return JSON.parse(s)}catch(e){}return mem}
+  function save(){mem=card;try{localStorage.setItem(KEY,JSON.stringify(card))}catch(e){}}
+  function todays(){return card.rolls.filter(function(r){return r.d===today()})}
+  function winLine(){
+    for(var i=0;i<LINES.length;i++){if(LINES[i].every(function(x){return card.marked[x]}))return LINES[i]}
+    return null;
+  }
+
+  function render(){
+    var g=$("#grid");g.innerHTML="";
+    var wl=card.win?card.win.line:[];
+    card.nums.forEach(function(n,i){
+      var d=document.createElement("div");d.className="cell";
+      if(i===12){d.classList.add("f");d.textContent="★"}
+      else{d.textContent=n;if(card.marked[i])d.classList.add("m")}
+      if(wl.indexOf(i)>-1)d.classList.add("w");
+      g.appendChild(d);
+    });
+    $("#sRolls").textContent=todays().length+"/"+DAILY;
+    $("#sHits").textContent=(card.marked.filter(Boolean).length-1)+"/24";
+    var ch=$("#chips");ch.innerHTML="";
+    var last=card.rolls.slice(-12);
+    $("#hTitle").textContent=last.length?"Your rolls":"No rolls yet. Make a purchase to get your first roll.";
+    last.forEach(function(r){var s=document.createElement("span");s.className="chip"+(card.nums.indexOf(r.n)>-1?" hit":"");s.textContent=r.n;ch.appendChild(s)});
+    var b=$("#banner");b.innerHTML="";
+    if(card.win){
+      var w=document.createElement("div");w.className="banner";
+      var t=document.createElement("div");
+      t.textContent="You won prize no. "+card.win.prize;
+      var sm=document.createElement("small");sm.textContent=card.win.claimed?"Prize collected":"Show this to our staff";t.appendChild(sm);
+      w.appendChild(t);
+      if(!card.win.claimed){var bt=document.createElement("button");bt.textContent="Show";bt.onclick=showWin;w.appendChild(bt)}
+      b.appendChild(w);
+    }
+    $("#cardId").textContent="Card "+card.id;
+  }
+
+  function showWin(){
+    $("#winNo").textContent=card.win.prize;
+    $("#winMeta").textContent="Card "+card.id+" · "+card.win.at;
+    var ov=$("#winOv");
+    ov.querySelectorAll(".cf").forEach(function(e){e.remove()});
+    var cols=["#ffc933","#ef4b4b","#12a66a","#6c7bff","#ffffff"];
+    for(var i=0;i<36;i++){
+      var c=document.createElement("i");c.className="cf";
+      c.style.left=rnd(0,100)+"%";c.style.background=cols[i%cols.length];
+      c.style.animationDuration=(2+rnd(0,20)/10)+"s";c.style.animationDelay=(rnd(0,15)/10)+"s";
+      ov.appendChild(c);
+    }
+    ov.classList.add("on");
+  }
+
+  function toolRender(){
+    var left=DAILY-todays().length;
+    $("#toolInfo").textContent="Card "+card.id+" · rolls left today: "+Math.max(left,0);
+    var ex=$("#extraRow");ex.innerHTML="";
+    if(card.win&&!card.win.claimed){
+      var b=document.createElement("button");b.className="alt";
+      b.textContent=claimArmed?"Tap again to confirm prize given":"Prize given to customer";
+      b.onclick=function(){
+        if(!claimArmed){claimArmed=true;toolRender();return}
+        card.win.claimed=true;claimArmed=false;save();render();toolRender();
+      };
+      ex.appendChild(b);
+    }else if(card.win&&card.win.claimed){
+      var n=document.createElement("button");n.className="alt";
+      n.textContent=newArmed?"Tap again to start a new card":"Start a new card";
+      n.onclick=function(){
+        if(!newArmed){newArmed=true;toolRender();return}
+        card=newCard(todays());newArmed=false;save();render();toolRender();setRes("New card ready.","good");
+      };
+      ex.appendChild(n);
+    }
+  }
+  function setRes(t,c){var r=$("#res");r.textContent=t;r.className="res "+(c||"")}
+
+  function doRoll(){
+    var n=parseInt($("#num").value,10);
+    if(!(n>=1&&n<=MAX)){setRes("Enter a number from 1 to "+MAX+".","bad");return}
+    if(card.win&&!card.win.claimed){setRes("This card has a prize to collect first.","bad");return}
+    if(card.win&&card.win.claimed){setRes("Start a new card first.","bad");return}
+    if(todays().length>=DAILY){setRes("Limit reached: "+DAILY+" rolls per day.","bad");return}
+    card.rolls.push({n:n,d:today()});
+    var idx=card.nums.indexOf(n),msg,cls;
+    if(idx>-1&&!card.marked[idx]){
+      card.marked[idx]=true;msg="MATCH! "+n+" is marked on the card.";cls="good";
+      var wl=winLine();
+      if(wl){
+        card.win={line:wl,prize:rnd(1,100),claimed:false,at:new Date().toLocaleString("en-SG",{timeZone:"Asia/Singapore",hour12:false})};
+        pending=true;msg="5 IN A ROW! Tap Done to show the prize.";
+      }
+    }else{msg="No match for "+n+".";cls="bad"}
+    save();render();toolRender();setRes(msg,cls);$("#num").value="";
+  }
+
+  function closeTool(){
+    $("#stOv").classList.remove("on");claimArmed=false;newArmed=false;
+    if(pending){pending=false;showWin()}
+  }
+
+  $("#staffBtn").onclick=function(){
+    $("#pinView").style.display="";$("#toolView").style.display="none";
+    $("#pin").value="";$("#pinRes").textContent="";$("#stOv").classList.add("on");
+    setTimeout(function(){$("#pin").focus()},50);
+  };
+  $("#pinCancel").onclick=function(){$("#stOv").classList.remove("on")};
+  function unlock(){
+    if($("#pin").value===staffPin()){
+      $("#pinView").style.display="none";$("#toolView").style.display="";
+      setRes("");toolRender();setTimeout(function(){$("#num").focus()},50);
+    }else{$("#pinRes").textContent="Wrong PIN. Try again.";$("#pin").value=""}
+  }
+  $("#pinGo").onclick=unlock;
+  $("#pin").onkeydown=function(e){if(e.key==="Enter")unlock()};
+  $("#markBtn").onclick=doRoll;
+  $("#num").onkeydown=function(e){if(e.key==="Enter")doRoll()};
+  $("#closeBtn").onclick=closeTool;
+  $("#winOk").onclick=function(){$("#winOv").classList.remove("on")};
+
+  card=load();
+  if(!card||!card.nums||card.nums.length!==25)card=newCard();
+  save();render();
+})();
+</script>
+</body>
+</html>
